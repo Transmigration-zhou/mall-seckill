@@ -16,13 +16,13 @@ type IProduct interface {
 	SelectAll() ([]*datamodels.Product, error)
 }
 
-func NewProductManager(table string, db *sql.DB) IProduct {
-	return &ProductManager{table: table, mysqlConn: db}
-}
-
 type ProductManager struct {
 	table     string
 	mysqlConn *sql.DB
+}
+
+func NewProductManager(table string, db *sql.DB) IProduct {
+	return &ProductManager{table: table, mysqlConn: db}
 }
 
 func (p *ProductManager) Conn() error {
@@ -108,7 +108,7 @@ func (p *ProductManager) SelectByKey(productID int64) (*datamodels.Product, erro
 
 func (p *ProductManager) SelectAll() ([]*datamodels.Product, error) {
 	if err := p.Conn(); err != nil {
-		return nil, err
+		return []*datamodels.Product{}, err
 	}
 	sql := "Select * from " + p.table
 	rows, err := p.mysqlConn.Query(sql)

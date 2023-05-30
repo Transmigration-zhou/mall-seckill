@@ -37,6 +37,13 @@ func main() {
 	product.Register(ctx, productService)
 	product.Handle(new(controllers.ProductController))
 
+	orderRepository := repositories.NewOrderManager("order", db)
+	orderService := services.NewOrderService(orderRepository)
+	orderParty := app.Party("/order")
+	order := mvc.New(orderParty)
+	order.Register(ctx, orderService)
+	order.Handle(new(controllers.OrderController))
+
 	app.Run(
 		iris.Addr(":8080"),
 		iris.WithoutServerError(iris.ErrServerClosed),
