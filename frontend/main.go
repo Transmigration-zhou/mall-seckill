@@ -7,6 +7,7 @@ import (
 	"github.com/kataras/iris/v12/sessions"
 	"log"
 	"mall-seckill/common"
+	"mall-seckill/frontend/middleware"
 	"mall-seckill/frontend/web/controllers"
 	"mall-seckill/repositories"
 	"mall-seckill/services"
@@ -43,6 +44,16 @@ func main() {
 	user := mvc.New(userParty)
 	user.Register(ctx, userService, sess.Start)
 	user.Handle(new(controllers.UserController))
+
+	productRepository := repositories.NewProductManager("product", db)
+	productService := services.NewProductService(productRepository)
+	orderRepository := repositories.NewOrderManager("order", db)
+	orderService := services.NewOrderService(orderRepository)
+	productParty := app.Party("/product")
+	productParty.Use(middleware.AuthConProduct)
+	product := mvc.New(productParty)
+	product.Register(ctx, productService, orderService, sess.Start)
+	product.Handle(new(controllers.ProductController))
 
 	app.Run(
 		iris.Addr(":8082"),

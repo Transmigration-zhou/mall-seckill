@@ -10,9 +10,9 @@ import (
 
 type IUser interface {
 	Conn() error
-	Select(userName string) (*datamodels.User, error)
+	Select(string) (*datamodels.User, error)
 	Insert(*datamodels.User) (int64, error)
-	SelectByID(ID int64) (*datamodels.User, error)
+	SelectByID(int64) (*datamodels.User, error)
 }
 
 type UserManager struct {

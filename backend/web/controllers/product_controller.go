@@ -65,7 +65,7 @@ func (p *ProductController) GetUpdate() mvc.View {
 	if err != nil {
 		p.Ctx.Application().Logger().Debug(err)
 	}
-	product, err := p.ProductService.GetProductByID(id)
+	product, err := p.ProductService.GetProductById(id)
 	if err != nil {
 		p.Ctx.Application().Logger().Debug(err)
 	}
