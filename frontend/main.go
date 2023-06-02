@@ -4,14 +4,12 @@ import (
 	"context"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
-	"github.com/kataras/iris/v12/sessions"
 	"log"
 	"mall-seckill/common"
 	"mall-seckill/frontend/middleware"
 	"mall-seckill/frontend/web/controllers"
 	"mall-seckill/repositories"
 	"mall-seckill/services"
-	"time"
 )
 
 func main() {
@@ -34,16 +32,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sess := sessions.New(sessions.Config{
-		Cookie:  "setCookie",
-		Expires: 60 * time.Minute,
-	})
-
 	userRepository := repositories.NewUserManager("user", db)
 	userService := services.NewUserService(userRepository)
 	userParty := app.Party("/user")
 	user := mvc.New(userParty)
-	user.Register(ctx, userService, sess.Start)
+	user.Register(ctx, userService)
 	user.Handle(new(controllers.UserController))
 
 	productRepository := repositories.NewProductManager("product", db)
@@ -53,7 +46,7 @@ func main() {
 	productParty := app.Party("/product")
 	productParty.Use(middleware.AuthConProduct)
 	product := mvc.New(productParty)
-	product.Register(ctx, productService, orderService, sess.Start)
+	product.Register(ctx, productService, orderService)
 	product.Handle(new(controllers.ProductController))
 
 	app.Run(

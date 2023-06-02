@@ -3,7 +3,6 @@ package controllers
 import (
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
-	"github.com/kataras/iris/v12/sessions"
 	"html/template"
 	"mall-seckill/datamodels"
 	"mall-seckill/services"
@@ -16,7 +15,6 @@ type ProductController struct {
 	Ctx            iris.Context
 	ProductService services.IProductService
 	OrderService   services.IOrderService
-	Session        *sessions.Session
 }
 
 var (

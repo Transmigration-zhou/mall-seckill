@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
-	"github.com/kataras/iris/v12/sessions"
 	"mall-seckill/common"
 	"mall-seckill/datamodels"
 	"mall-seckill/services"
@@ -13,7 +13,6 @@ import (
 type UserController struct {
 	Ctx     iris.Context
 	Service services.IUserService
-	Session *sessions.Session
 }
 
 func (c *UserController) GetRegister() mvc.View {
@@ -60,7 +59,12 @@ func (c *UserController) PostLogin() mvc.Response {
 		}
 	}
 	common.GlobalCookie(c.Ctx, "uid", strconv.FormatInt(user.Id, 10))
-	c.Session.Set("userId", strconv.FormatInt(user.Id, 10))
+	uidByte := []byte(strconv.FormatInt(user.Id, 10))
+	uidString, err := common.EnPwdCode(uidByte)
+	if err != nil {
+		fmt.Println(err)
+	}
+	common.GlobalCookie(c.Ctx, "sign", uidString)
 	return mvc.Response{
 		Path: "/product/",
 	}
