@@ -1,10 +1,12 @@
 package controllers
 
 import (
+	"encoding/json"
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
 	"html/template"
 	"mall-seckill/datamodels"
+	"mall-seckill/rabbitmq"
 	"mall-seckill/services"
 	"os"
 	"path/filepath"
@@ -15,6 +17,7 @@ type ProductController struct {
 	Ctx            iris.Context
 	ProductService services.IProductService
 	OrderService   services.IOrderService
+	RabbitMQ       *rabbitmq.RabbitMQ
 }
 
 var (
@@ -84,7 +87,50 @@ func (p *ProductController) GetDetail() mvc.View {
 	}
 }
 
-func (p *ProductController) GetOrder() mvc.View {
+//func (p *ProductController) GetOrder() mvc.View {
+//	userId, err := strconv.ParseInt(p.Ctx.GetCookie("uid"), 10, 64)
+//	if err != nil {
+//		p.Ctx.Application().Logger().Debug(err)
+//	}
+//	productId, err := strconv.ParseInt(p.Ctx.URLParam("productId"), 10, 64)
+//	if err != nil {
+//		p.Ctx.Application().Logger().Debug(err)
+//	}
+//	product, err := p.ProductService.GetProductById(productId)
+//	if err != nil {
+//		p.Ctx.Application().Logger().Debug(err)
+//	}
+//	var orderId int64
+//	showMessage := "抢购失败"
+//	if product.ProductNum > 0 {
+//		product.ProductNum -= 1
+//		err := p.ProductService.UpdateProduct(product)
+//		if err != nil {
+//			p.Ctx.Application().Logger().Debug(err)
+//		}
+//		order := &datamodels.Order{
+//			UserId:      userId,
+//			ProductId:   productId,
+//			OrderStatus: datamodels.OrderSuccess,
+//		}
+//		orderId, err = p.OrderService.InsertOrder(order)
+//		if err != nil {
+//			p.Ctx.Application().Logger().Debug(err)
+//		} else {
+//			showMessage = "抢购成功"
+//		}
+//	}
+//	return mvc.View{
+//		Layout: "shared/productLayout.html",
+//		Name:   "product/result.html",
+//		Data: iris.Map{
+//			"orderId":     orderId,
+//			"showMessage": showMessage,
+//		},
+//	}
+//}
+
+func (p *ProductController) GetOrder() []byte {
 	userId, err := strconv.ParseInt(p.Ctx.GetCookie("uid"), 10, 64)
 	if err != nil {
 		p.Ctx.Application().Logger().Debug(err)
@@ -93,36 +139,15 @@ func (p *ProductController) GetOrder() mvc.View {
 	if err != nil {
 		p.Ctx.Application().Logger().Debug(err)
 	}
-	product, err := p.ProductService.GetProductById(productId)
+
+	message := datamodels.NewMessage(userId, productId)
+	byteMessage, err := json.Marshal(message)
 	if err != nil {
 		p.Ctx.Application().Logger().Debug(err)
 	}
-	var orderId int64
-	showMessage := "抢购失败"
-	if product.ProductNum > 0 {
-		product.ProductNum -= 1
-		err := p.ProductService.UpdateProduct(product)
-		if err != nil {
-			p.Ctx.Application().Logger().Debug(err)
-		}
-		order := &datamodels.Order{
-			UserId:      userId,
-			ProductId:   productId,
-			OrderStatus: datamodels.OrderSuccess,
-		}
-		orderId, err = p.OrderService.InsertOrder(order)
-		if err != nil {
-			p.Ctx.Application().Logger().Debug(err)
-		} else {
-			showMessage = "抢购成功"
-		}
+	err = p.RabbitMQ.PublishSimple(string(byteMessage))
+	if err != nil {
+		p.Ctx.Application().Logger().Debug(err)
 	}
-	return mvc.View{
-		Layout: "shared/productLayout.html",
-		Name:   "product/result.html",
-		Data: iris.Map{
-			"orderId":     orderId,
-			"showMessage": showMessage,
-		},
-	}
+	return []byte("true")
 }

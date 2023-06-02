@@ -8,6 +8,7 @@ import (
 	"mall-seckill/common"
 	"mall-seckill/frontend/middleware"
 	"mall-seckill/frontend/web/controllers"
+	"mall-seckill/rabbitmq"
 	"mall-seckill/repositories"
 	"mall-seckill/services"
 )
@@ -32,6 +33,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	rabbitMq := rabbitmq.NewRabbitMQSimple("product")
+
 	userRepository := repositories.NewUserManager("user", db)
 	userService := services.NewUserService(userRepository)
 	userParty := app.Party("/user")
@@ -46,7 +49,7 @@ func main() {
 	productParty := app.Party("/product")
 	productParty.Use(middleware.AuthConProduct)
 	product := mvc.New(productParty)
-	product.Register(ctx, productService, orderService)
+	product.Register(ctx, productService, orderService, rabbitMq)
 	product.Handle(new(controllers.ProductController))
 
 	app.Run(
